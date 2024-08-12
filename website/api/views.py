@@ -12,7 +12,7 @@ import json
 import sys
 
 sys.path.append("/speakingTrajectories")
-from Pipeline.TrajectoryPipeline import *
+from TrajPipeline.Pipeline.TrajectoryPipeline import *
 
 
 # Clear Database
@@ -31,7 +31,7 @@ class QueryList(generics.ListAPIView):
 
 @api_view(["POST"])
 def summarizeTrajectories(request):
-    _filePathInput = "/speakingTrajectories/Pipeline/Input/params.json"
+    _filePathInput = "/speakingTrajectories/TrajPipeline/Pipeline/Input/params.json"
     print("Request for Summarizing Trajectories ")
     serializer = QuerySeriazlier(data=request.data)
     if serializer.is_valid():
@@ -41,7 +41,9 @@ def summarizeTrajectories(request):
         _request_type = request.data.get("requestType")
         file_name = f"uploadedTrajs_{_request_id_}_{_request_type}.json"
         _filePathWebsite = f"/speakingTrajectories/GUST-GPT/website/frontend/build/static/media/{file_name}"
-        _filePathPipeline = f"/speakingTrajectories/Pipeline/Input/{file_name}"
+        _filePathPipeline = (
+            f"/speakingTrajectories/TrajPipeline/Pipeline/Input/{file_name}"
+        )
         jsonToSave = {
             "mode": "summarization_testing",
             "city": request.data.get("city", ""),
@@ -66,7 +68,7 @@ def summarizeTrajectories(request):
         print("I returned from the pipeline")
 
         try:
-            json_file_path = "/speakingTrajectories/Pipeline/Detokenization/detokenizedTrajectories.json"
+            json_file_path = "/speakingTrajectories/TrajPipeline/Pipeline/Detokenization/detokenizedTrajectories.json"
             with open(json_file_path, "r") as json_file:
                 data = json.load(json_file)
 
@@ -114,7 +116,7 @@ def imputeTrajectories(request):
 
 @api_view(["POST"])
 def generateTrajectories(request):
-    _filePath = "/speakingTrajectories/Pipeline/Input/params.json"
+    _filePath = "/speakingTrajectories/TrajPipeline/Pipeline/Input/params.json"
     print("Request for Generating Trajectories ")
     serializer = QuerySeriazlier(data=request.data)
     if serializer.is_valid():
@@ -139,7 +141,7 @@ def generateTrajectories(request):
         print("I returned from the pipeline")
 
         try:
-            json_file_path = "/speakingTrajectories/Pipeline/Detokenization/detokenizedTrajectories.json"
+            json_file_path = "/speakingTrajectories/TrajPipeline/Pipeline/Detokenization/detokenizedTrajectories.json"
             with open(json_file_path, "r") as json_file:
                 data = json.load(json_file)
 
@@ -156,9 +158,7 @@ def generateTrajectories(request):
 
 @api_view(["POST"])
 def downloadTrajectories(request):
-    input_filePath = (
-        "/speakingTrajectories/Pipeline/Detokenization/detokenizedTrajectories.json"
-    )
+    input_filePath = "/speakingTrajectories/TrajPipeline/Pipeline/Detokenization/detokenizedTrajectories.json"
     print("Request for Downloading Data ")
     serializer = QuerySeriazlier(data=request.data)
     if serializer.is_valid():
