@@ -19,11 +19,13 @@ import RestoreIcon from '@mui/icons-material/Restore';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import DownloadIcon from '@mui/icons-material/Download';
 import CompressIcon from '@mui/icons-material/Compress';
+import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 
 import logo from './assets/route.svg';
 import CitiesDropdown from "./CitiesDropdown";
+import OperationsDropdown from "./OperationsDropdown";
 import QuantityInput from "./NumberInputComponent";
 import Divider from '@mui/material/Divider';
 import ProgressBar from "react-bootstrap/ProgressBar";
@@ -33,11 +35,20 @@ const Header = ({ handleImageUpdate, handleCityUpdate }) => {
     const [uploadedData, setUploadedData] = useState(null);
     const [activeTab, setActiveTab] = useState(0);
     const [city, setCity] = React.useState("");
+    const [city2, setCity2] = React.useState("");
+    const [email, setEmail] = useState('');
+    const [uploadedData2, setUploadedData2] = useState(null);
+
+    const [operation, setOperation] = React.useState("");
+
     const [maxTrajectoriesCount, setMaxTrajectoriesCount] = React.useState(1);
     const [maxTrajectoriesLength, setMaxTrajectoriesLength] = React.useState(10);
     const [progress, setProgress] = useState(100); // State to manage progress
     const [progressDesc, setProgressDesc] = useState("Progess Will Show Here..."); // State to manage progress
     const [estimatedTimeDesc, setEstimatedTimeDesc] = useState(""); // State to manage progress
+    const [progress2, setProgress2] = useState(100); // State to manage progress
+    const [progressDesc2, setProgressDesc2] = useState("Please Enter Details Above..."); // State to manage progress
+    const [estimatedTimeDesc2, setEstimatedTimeDesc2] = useState(""); // State to manage progress
     const [timer, setTimer] = useState(null); // Store timer ID for clearing
     const [totalGPSPoints, setTotalGPSPoints] = useState(0);
     const [formData, setFormData] = useState({
@@ -46,6 +57,14 @@ const Header = ({ handleImageUpdate, handleCityUpdate }) => {
         trajectoriesCount: 0,
         trajectoriesLength: 0,
         city: "",
+
+    });
+    const [formData2, setFormData2] = useState({
+        requestType: "",
+        trajectoriesUploaded: null,
+        city: "",
+        operation: "",
+        email: "",
 
     });
     // const [dummy, setDummy] = useState(null);
@@ -57,6 +76,14 @@ const Header = ({ handleImageUpdate, handleCityUpdate }) => {
     };
     const handleChangeCityDropDown = (event) => {
         setCity(event.target.value);
+        // handleCityUpdate(city);
+    };
+    const handleChangeCityDropDown2 = (event) => {
+        setCity2(event.target.value);
+        // handleCityUpdate(city);
+    };
+    const handleChangeOperationDropDown = (event) => {
+        setOperation(event.target.value);
         // handleCityUpdate(city);
     };
     const handleFileChange = (event) => {
@@ -115,6 +142,61 @@ const Header = ({ handleImageUpdate, handleCityUpdate }) => {
         };
         reader.readAsText(file);
     };
+    const handleFileChange2 = (event) => {
+        const file = event.target.files[0];
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                let json = JSON.parse(e.target.result);
+                // Function to add the summary to each trajectory and place it in a 'trajectories' array
+                const addSummaryToTrajectories = (data) => {
+                    // Filter and map the data
+                    const filteredData = data.map(item => {
+                        const firstPoint = item.trajectory.split(',')[0]; // Extract the first GPS point
+                        return {
+                            id: item.id,
+                            trajectory: item.trajectory,
+                            summary: firstPoint // Add the summary part
+                        };
+                    });
+
+                    // Return an object with the 'trajectories' key
+                    return {
+                        trajectories: filteredData
+                    };
+                };
+                // console.log(json);
+
+
+                // Add the summary to each trajectory
+                json = addSummaryToTrajectories(json);
+                // // Function to calculate the total number of GPS points
+                // const calculateTotalGPSPoints = (data) => {
+                //     let totalPoints = 0;
+                //     let points = 0;
+                //     data.trajectories.forEach(item => {
+                //         points = item.trajectory.split(',').length;
+                //         if (points * 2 < 100) {
+                //             points = 100;
+                //         }
+                //         totalPoints += points;
+                //     });
+                //     return totalPoints;
+                // };
+
+                // Calculate and set the total number of GPS points
+                // const totalPoints2 = calculateTotalGPSPoints(json);
+                // setTotalGPSPoints2(totalPoints2);
+                // console.log(`Total GPS points in all trajectories: ${totalPoints2}`);
+
+                setTrajectoriesReceived(json);
+                setUploadedData2(json.trajectories);
+            } catch (error) {
+                console.error('Error parsing JSON:', error);
+            }
+        };
+        reader.readAsText(file);
+    };
 
     const handleSummarizeClick = async (e) => {
         if (e) e.preventDefault();
@@ -138,7 +220,7 @@ const Header = ({ handleImageUpdate, handleCityUpdate }) => {
         console.log(formData.trajectoriesUploaded);
         // Set up the interval for updating progress
         // console.log("totalPoints:", totalGPSPoints);
-        const duration = ((totalGPSPoints * 2 * 0.025) * 1000) + 9000; // 0.025 second per token and space is counted * total input gps points converted to milliseconds + 9 second warmup
+        const duration = ((totalGPSPoints * 4 * 0.03) * 1000) + 9000; // (0.03 second per token and space is counted)*2 "two trials maximum" * total input gps points converted to milliseconds + 9 second warmup
         // console.log(duration);
         const interval = duration / 10; // Update every second
         let elapsed = 0;
@@ -149,7 +231,12 @@ const Header = ({ handleImageUpdate, handleCityUpdate }) => {
         setEstimatedTimeDesc(`Est. Time ~ ${durationInMinutes} minute(s) (upper estimate)`);
         const newTimer = setInterval(() => {
             elapsed += interval;
-            const percentage = Math.min((elapsed / duration) * 100, 100);
+            let percentage = Math.min((elapsed / duration) * 100, 100);
+
+            if (percentage >= 100) {
+                percentage = 90; // Cap the progress at 90% if it reaches 100%
+            }
+
             setProgress(percentage);
         }, interval);
 
@@ -191,9 +278,6 @@ const Header = ({ handleImageUpdate, handleCityUpdate }) => {
             clearInterval(newTimer); // Clear timer on exception
         }
     };
-
-
-
     const handleImputeClick = async (e) => {
         if (e) e.preventDefault();
         if (!uploadedData) {
@@ -276,7 +360,12 @@ const Header = ({ handleImageUpdate, handleCityUpdate }) => {
         setEstimatedTimeDesc(`Est. Time ~ ${durationInMinutes} minute(s) (upper estimate)`);
         const newTimer = setInterval(() => {
             elapsed += interval;
-            const percentage = Math.min((elapsed / duration) * 100, 100);
+            let percentage = Math.min((elapsed / duration) * 100, 100);
+
+            if (percentage >= 100) {
+                percentage = 90; // Cap the progress at 90% if it reaches 100%
+            }
+
             setProgress(percentage);
         }, interval);
 
@@ -396,12 +485,100 @@ const Header = ({ handleImageUpdate, handleCityUpdate }) => {
             // clearInterval(newTimer); // Clear timer on exception
         }
     };
+    const handleStartTrainingClick = async (e) => {
+        if (e) e.preventDefault();
+
+        if (!city2) {
+            alert("Please Select A City From The List Above");
+            return;
+        }
+        else if (!operation) {
+            alert("Please Select An Operation From The List Above");
+            return;
+        }
+        else if (!email) {
+            alert("Please Enter An Email To Notify You When Done");
+            return;
+        }
+        else if (!uploadedData2) {
+            alert("Please Upload A Dataset");
+            return;
+        }
+        formData2.requestType = "Train";
+        formData2.city = city2;
+        formData2.trajectoriesUploaded = uploadedData2;
+        formData2.operation = operation;
+        formData2.email = email;
+        // Reset progress and description
+        setProgress2(0);
+        setProgressDesc("Submitting A New Request...");
+        setEstimatedTimeDesc(``);
+        try {
+            //Clear the map from any plotted trajectories
+
+            const response = await fetch("train/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(formData2),
+            });
+
+            // console.log("Response,", response);
+
+            if (response.ok) {
+                // Parse the response as JSON
+                const responseData = await response.json();
+
+                setProgress2(100);
+                setProgressDesc2("Request Submitted Successfully, You will");
+                setEstimatedTimeDesc2(`recieve an email, when model is ready...`);
+                // Set a timeout to reset the progress and descriptions after 5 seconds
+                setTimeout(() => {
+                    setProgress2(0); // Reset progress to 0
+                    setProgressDesc2("You Can Start A New Request Now"); // Clear progress description
+                    setEstimatedTimeDesc2(""); // Clear estimated time description
+                    setOperation("");
+                    setCity2("");
+                    setEmail("");
+                    setUploadedData2(null);
+                    setTrajectoriesReceived(null);
+                    handleImageUpdate(null);
+
+                }, 7000); // 7000 milliseconds = 7 seconds
+
+                // clearInterval(newTimer); // Clear timer when done
+            } else {
+                const errorResponse = await response.json();
+                setProgress2(0);
+                setProgressDesc2(`Error: ${errorResponse.error}`);
+                setEstimatedTimeDesc2(``);
+                console.error("Failed to download results. HTTP status:", response.status, "Error message:", errorResponse.error);
+                // clearInterval(newTimer); // Clear timer on error
+            }
+        } catch (error) {
+            if (error.message === 'Request timed out') {
+                console.error("The request timed out. Please try again later.");
+            } else {
+                console.error("Error requesting Trajectories:", error);
+            }
+            setProgress2(0);
+            setProgressDesc2("Error occurred. Please try again.");
+            setEstimatedTimeDesc2(``);
+            // clearInterval(newTimer); // Clear timer on exception
+        }
+    };
 
     useEffect(() => {
         if (city) {
             handleCityUpdate(city);
         }
     }, [city, handleCityUpdate]);
+    useEffect(() => {
+        if (city2) {
+            handleCityUpdate(city2);
+        }
+    }, [city2, handleCityUpdate]);
 
     useEffect(() => {
         if (trajectoriesReceived) {
@@ -487,8 +664,16 @@ const Header = ({ handleImageUpdate, handleCityUpdate }) => {
                                         variant="contained"
                                         color="inherit"
                                         startIcon={<UploadIcon />}
-                                        size="large"
+                                        size="small"
                                         fullWidth
+                                        sx={{
+                                            // textTransform: 'none',
+                                            backgroundColor: '#C2B9B0',
+                                            color: 'black',
+                                            '&:hover': {
+                                                backgroundColor: '#b0a69b'
+                                            }
+                                        }}
                                     >
                                         Upload Trajectories
                                         <VisuallyHiddenInput type="file" accept="application/json" onChange={handleFileChange} />
@@ -500,7 +685,7 @@ const Header = ({ handleImageUpdate, handleCityUpdate }) => {
                                     <Grid item xs={6}>
                                         <ButtonMaterial
                                             variant="contained"
-                                            size="medium"
+                                            size="small"
                                             startIcon={<CompressIcon />}
                                             onClick={handleSummarizeClick}
                                             fullWidth
@@ -519,7 +704,7 @@ const Header = ({ handleImageUpdate, handleCityUpdate }) => {
                                     <Grid item xs={6}>
                                         <ButtonMaterial
                                             variant="contained"
-                                            size="medium"
+                                            size="small"
                                             startIcon={<RestoreIcon />}
                                             onClick={handleImputeClick}
                                             fullWidth
@@ -577,16 +762,19 @@ const Header = ({ handleImageUpdate, handleCityUpdate }) => {
 
                             </div>
                             <MenuItem>
-                                <Box display="flex" justifyContent="center" width="100%">
+                                <Box display="flex" justifyContent="center" width="80%">
                                     <ButtonMaterial
                                         variant="contained"
                                         color="primary"
-                                        size="medium"
+                                        size="small"
+
                                         startIcon={<TrendingUpIcon />}
                                         onClick={handleGenerateClick}
                                         fullWidth
                                         sx={{
+                                            // fontSize: '15px',
                                             backgroundColor: '#C2B9B0',
+                                            marginLeft: '3vw',
                                             color: 'black',
                                             '&:hover': {
                                                 backgroundColor: '#b0a69b'
@@ -639,10 +827,11 @@ const Header = ({ handleImageUpdate, handleCityUpdate }) => {
                                 />
                             </div>
                             <MenuItem>
-                                <Box display="flex" width="50%">
+                                <Box display="flex" justifyContent="center" width="50%">
                                     <div
                                         style={{
-                                            marginLeft: "60px",
+                                            marginLeft: "7vw",
+                                            maringRight: "3vw",
 
                                         }}
                                     >
@@ -653,6 +842,14 @@ const Header = ({ handleImageUpdate, handleCityUpdate }) => {
                                             startIcon={<DownloadIcon />}
                                             onClick={handleDownloadClick}
                                             fullWidth
+                                            sx={{
+                                                // textTransform: 'none',
+                                                backgroundColor: '#C2B9B0',
+                                                color: 'black',
+                                                '&:hover': {
+                                                    backgroundColor: '#b0a69b'
+                                                }
+                                            }}
 
                                         >
                                             Download
@@ -665,7 +862,119 @@ const Header = ({ handleImageUpdate, handleCityUpdate }) => {
                     {activeTab === 1 && (
                         <Menu iconShape="square">
                             <MenuItem>
-                                {/* Placeholder for future content */}
+                                <div style={{ marginTop: "-20px", marginLeft: "10px" }}>
+                                    <h4 className="sidebar-titles">Select Operation Type:</h4>
+                                    <div style={{ marginLeft: "0px" }}></div>
+                                </div>
+
+                                <div style={{ marginLeft: '-15px' }}>
+                                    <OperationsDropdown operationName={operation} handleOperationChange={handleChangeOperationDropDown} />
+                                </div>
+                                {/* </MenuItem>
+                            <MenuItem > */}
+                                <div style={{ marginTop: "-20px", marginLeft: "10px" }}>
+                                    <h4 className="sidebar-titles">Select City:</h4>
+                                    <div style={{ marginLeft: "0px" }}></div>
+                                </div>
+                                <div style={{ marginLeft: '-15px' }}>
+                                    <CitiesDropdown cityName={city2} handleCityChange={handleChangeCityDropDown2} />
+                                </div>
+                                {/* </MenuItem>
+                            <MenuItem> */}
+                                <Box display="flex" justifyContent="center" width="100%">
+                                    <ButtonMaterial
+                                        component="label"
+                                        variant="contained"
+                                        color="inherit"
+                                        startIcon={<UploadIcon />}
+                                        size="medium"
+                                        fullWidth
+                                        sx={{
+                                            // textTransform: 'none',
+                                            backgroundColor: '#C2B9B0',
+                                            color: 'black',
+                                            fontSize: '11px',
+                                            '&:hover': {
+                                                backgroundColor: '#b0a69b'
+                                            }
+                                        }}
+                                    >
+                                        Upload Dataset of Trajectories
+                                        <VisuallyHiddenInput type="file" accept="application/json" onChange={handleFileChange2} />
+                                    </ButtonMaterial>
+                                </Box>
+
+                                <Box display="flex" justifyContent="flex-start" width="100%">
+
+                                    <input
+                                        type="email"
+                                        id="email"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        placeholder="Enter your email address"
+                                        style={{ marginLeft: '0px', padding: '5px', marginTop: '15px', marginBottom: '20px', width: '250px', }}
+                                        required
+                                    />
+                                </Box>
+                                <Box display="flex" justifyContent="center" width="100%">
+                                    <ButtonMaterial
+                                        variant="contained"
+                                        size="small"
+                                        startIcon={<PlayCircleOutlineIcon />}
+                                        onClick={handleStartTrainingClick}
+                                        fullWidth
+                                        sx={{
+                                            // textTransform: 'none',
+                                            backgroundColor: '#C2B9B0',
+                                            color: 'black',
+                                            '&:hover': {
+                                                backgroundColor: '#b0a69b'
+                                            }
+                                        }}
+                                    >
+                                        Start Training
+                                    </ButtonMaterial>
+                                </Box>
+                                <div
+                                    style={{
+                                        marginTop: "20px",
+                                        display: "flex",
+                                        color: "white",
+                                        marginLeft: "15px",
+                                        // justifyContent: "center",
+                                    }}
+                                >
+
+
+                                    <p style={{ fontSize: "13px", color: '#000000' }}>{progressDesc2}</p>
+                                </div>
+                                <div
+                                    style={{
+                                        marginTop: "-10px",
+                                        display: "flex",
+                                        color: "white",
+                                        marginLeft: "15px",
+                                        // justifyContent: "center",
+                                    }}
+                                >
+                                    <p style={{ fontSize: "13px", color: '#000000' }}>{estimatedTimeDesc2}</p>
+                                </div>
+                                <div
+                                    style={{
+                                        marginTop: "0px",
+                                        display: "flex",
+                                        justifyContent: "center",
+                                    }}
+                                >
+
+                                    {/* TODO: Look at this website later to do the progress bar  */}
+                                    <ProgressBar
+                                        // animated
+                                        now={progress2} // Set progress dynamically
+                                        label={`Progress: ${progress2}%`}
+                                        style={{ width: "90%", height: "85%" }}
+                                    />
+                                </div>
                             </MenuItem>
                         </Menu>
                     )}

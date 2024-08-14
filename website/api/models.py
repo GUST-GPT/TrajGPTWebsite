@@ -8,6 +8,13 @@ class Query(models.Model):
         ("Impute", "Impute"),
         ("Generate", "Generate"),
         ("Download", "Download"),
+        ("Train", "Train"),
+    )
+    OPERATION_CHOICES = (
+        ("Trajectory Classification", "Trajectory Classification"),
+        ("Trajectory Generation", "Trajectory Generation"),
+        ("Trajectory Imputation", "Trajectory Imputation"),
+        ("Trajectory Summarization", "Trajectory Summarization"),
     )
     requestType = models.CharField(max_length=15, choices=REQUEST_CHOICES)
     city = models.CharField(max_length=30)
@@ -19,6 +26,8 @@ class Query(models.Model):
     )
     # trajectoriesUploaded = models.JSONField()
     created_at = models.DateTimeField(auto_now_add=True)
+    operation = models.CharField(max_length=30, choices=OPERATION_CHOICES)
+    email = models.EmailField(max_length=254)  # Add this line
 
     def __str__(self):
         return f"{self.requestType} - {self.city}"

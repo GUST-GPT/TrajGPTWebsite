@@ -11,5 +11,6 @@ urlpatterns = [
     path("impute/", imputeTrajectories, name="impute"),
     path("generate/", generateTrajectories, name="generate"),
     path("download/", downloadTrajectories, name="download"),
+    path("train/", trainNewModel, name="train"),
     path("db/", views.QueryList.as_view(), name="queries"),
 ]

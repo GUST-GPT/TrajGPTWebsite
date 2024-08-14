@@ -76,7 +76,7 @@ const MapComponent = ({ trajectoriesReceived, CityName }) => {
             console.log("Selected trajectory", selectedTrajectory);
             const points = parseTrajectory(selectedTrajectory.trajectory);
             setCenter(points[0] || center);
-            setZoom(15); // Zoom level for selected trajectory
+            setZoom(16); // Zoom level for selected trajectory
         }
     }, [selectedTrajectory]);
 
@@ -220,6 +220,7 @@ const MapComponent = ({ trajectoriesReceived, CityName }) => {
                         border: 'none',
                         borderRadius: '8px',
                         padding: '10px',
+                        fontSize: '12px', // Smaller font size
                         cursor: 'pointer',
                         zIndex: 10000 // Ensures the button is on top of the map
                     }}

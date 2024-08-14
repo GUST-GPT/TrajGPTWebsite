@@ -15,6 +15,20 @@ class QuerySeriazlier(serializers.ModelSerializer):
             # "trajectoriesUploaded",
         ]
 
+
+class QuerySeriazlier2(serializers.ModelSerializer):
+    class Meta:
+        model = Query
+        fields = [
+            "id",
+            "created_at",
+            "requestType",
+            "city",
+            "operation",
+            "email",
+            # "trajectoriesUploaded",
+        ]
+
     # def create(self, validated_data):
     #     # Exclude trajectoriesUploaded from validated_data
     #     validated_data.pop("trajectoriesUploaded", None)
